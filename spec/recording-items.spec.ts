@@ -1,6 +1,9 @@
 import { Ensure, equals, isPresent, not } from '@serenity-js/assertions';
+import { actorCalled, Debug, Log } from '@serenity-js/core';
 import { describe, it } from '@serenity-js/playwright-test';
+import { CallAnApi, GetRequest, LastResponse, Send } from '@serenity-js/rest';
 import { isVisible, Value } from '@serenity-js/web';
+import axios from 'axios';
 
 import { TODO_ITEMS } from './todo-list-app/test-data';
 import {
@@ -19,6 +22,17 @@ import { itemNames } from './todo-list-app/TodoList';
 
 describe('Recording items', () => {
 
+    /*     describe('Todo List App', () => {
+        it('primera petición', async () => {
+            const httpClient = axios.create({ baseURL: 'https://dummyjson.com' })
+            actorCalled('Apisitt')
+                .whoCan(CallAnApi.using(httpClient))
+                .attemptsTo(
+                    Send.a(GetRequest.to('/products/1')),
+                )
+        })
+    })
+ */
     /**
      * You can override the default actor name and the Serenity/JS "crew" in playwright.config.ts,
      * or in the test scenarios themselves.
@@ -33,7 +47,37 @@ describe('Recording items', () => {
 
     describe('Todo List App', () => {
 
+        it('primera petición', async () => {
+            const httpClient = axios.create({ baseURL: 'https://dummyjson.com' })
+            const julia =  actorCalled('Apisitt')
+                .whoCan(CallAnApi.using(httpClient))
+
+            await julia
+                .attemptsTo(
+                    Send.a(GetRequest.to('/products/1')),
+                    Debug.values((result, some, some1) => {
+                        // set a breakpoint anywhere inside this function
+                        console.log('1')
+                        const a = some1
+                        const b = result[1].description
+                    
+                    },
+                    Ensure.that( LastResponse.status(), equals(200)),
+                    Log.the('current body', LastResponse.body(), LastResponse.status()),
+                    ),
+                )
+
+            CallAnApi.as(julia).mapLastResponse((response) => {
+                console.log('3')
+                console.log(response.data)
+            })
+
+            console.log('2')
+            console.log(LastResponse.body())
+        })
+
         it('should allow me to add todo items', async ({ actor }) => {
+            console.log(actor)
             await actor.attemptsTo(
                 startWithAnEmptyList(),
 
